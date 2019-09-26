@@ -1,0 +1,183 @@
+   _                 _  ______                       
+  | |               | | | ___ \                      
+  | |__   ___   ___ | |_| |_/ /___   __ _ _   _  ___ 
+  | '_ \ / _ \ / _ \| __|    // _ \ / _` | | | |/ _ \
+  | |_) | (_) | (_) | |_| |\ \ (_) | (_| | |_| |  __/
+  |_.__/ \___/ \___/ \__\_| \_\___/ \__, |\__,_|\___| 
+  \            A_________            __/ |          /           
+   \        )==o_________>          |___/          /
+    \__________V__________________________________/
+
+bootRogue, a roguelike game that fits in a boot sector (510 bytes)
+by Oscar Toledo G. Sep/26/2019
+
+http://nanochess.org
+https://github.com/nanochess/bootRogue
+
+It's compatible with 8088 (the original IBM PC)
+
+If you want to assemble it, you must download the Netwide Assembler
+(nasm) from www.nasm.us
+
+Use this command line:
+
+  nasm -f bin rogue.asm -l rogue.lst -o rogue.img
+  nasm -f bin rogue.asm -Dcom_file=1 -o rogue.com
+
+
+>> HOW TO PLAY <<
+
+Move with the arrow keys to reveal the area where you are.
+Any action is done by touching the target.
+
+Any letter is a monster, the Aardvark monster is the most
+easiest of the game, while the Zombie master monster is the
+most difficult one. Touching them will cause a battle to
+start, press any key to keep advancing the battle and see
+how your HP goes down.
+
+The diamonds are traps that will suck your HP.
+
+The clover symbol is food. The square with a hole in the
+center is armor, getting more of these means the monsters
+will have a hard time hitting you. The up arrow is weapon,
+getting more of these means the monsters will receive harder
+hits.
+
+The asterisk like symbol is gold, but doesn't affect the
+gameplay nor is counted (because lack of space), but I wanted
+to have gold in the game ;)
+
+Finally the Amulet of Yendor is represented by a Female sign,
+and it will appear only in level 26 or deeper. Once you get
+the amulet, the ladders will start taking you to upper levels.
+
+The game will get stuck once you lose all your HP or take the
+last ladder to surface.
+
+Enjoy it!
+
+
+>> AND THERE WAS ROGUE <<
+
+I was a young kid when I learned to put floppy disks inside an
+old Television machine with monochrome monitor, turning the
+handle to close the door, and turning it again to open it and
+insert another disk.
+
+I learned by watching that you could enter DIR, and then enter
+the name of anything that appeared at the left side.
+
+Didn't passed too much time until I saw I could execute only
+the files with COM or EXE letters at the right side.
+
+I played Digger, Jumpjoe, Columbia Invaders, Buzzard Bait,
+J-Bird, Bushido, some Pacman-like games, and then I found a
+game starting with a full text screen and then a tiny face
+over a dotted background. It was called ROGUE.EXE.
+
+You could move over the rooms and find things, like a ring,
+armor, weapons, and monsters! Barely I could understand English
+but I got me immediately because there were always things
+around the corner, and more levels!
+
+I went lazy and tried to go so deep as possible, finding the
+ladders without fighting. Big mistake! A dragon appeared and
+roared fire with ASCII letters, killing me immediately. I was
+hooked!
+
+Patience was the key, slowly started to gather experience
+killing the small monsters, discovered how to get better
+weapons and armor, avoided the rings (You could never know
+the strange things these could do! Except of course when I
+found the Identify scroll). Went to level 26 and retrieved
+the amulet of Yendor, then started to go back to surface,
+fighting for my life, avoiding monsters, and finally I was
+out! I was ecstatic, and I was age 11.
+
+It was one of these epic fables that you do only one time
+in the life, since then I only played some minutes a game
+of Rogue for the nostalgia, but didn't had time again to
+go to level 26.
+
+
+>> 30 YEARS LATER... <<
+
+But still I had the game in my mind, and decided that I
+could write a smaller version for a boot sector, just as a
+challenge.
+
+I had "clear" specifications, it had to have the ASCII
+graphics and gold (this made it a very difficult task).
+
+  Statistics of source code files over development.
+
+                lines bytes (com file)
+  rogue0.asm     252   351  Sep/20/2019 07:18pm
+  rogue1.asm     358   467  Sep/21/2019 10:00pm
+  rogue2.asm     548   829  Sep/22/2019 05:54pm
+  rogue3.asm     502   759  Sep/23/2019 05:22pm
+  rogue4.asm     468   670  Sep/23/2019 07:03pm
+  rogue5.asm     460   652  Sep/23/2019 09:43pm
+  rogue6.asm     460   643  Sep/23/2019 10:16pm
+  rogue7.asm     457   630  Sep/24/2019 07:08pm                    
+  rogue8.asm     435   602  Sep/24/2019 07:48pm
+  rogue9.asm     436   596  Sep/24/2019 09:44pm
+  rogue10.asm    441   576  Sep/25/2019 01:35pm
+  rogue11.asm    480   553  Sep/25/2019 10:24pm
+  rogue12.asm    472   510  Sep/26/2019 12:24pm
+
+I went into a coding spree and I had coded the whole game
+in 3 days. But of course it was too big (rogue2.asm).
+
+Then I had to optimize carefully the code and remove the
+features that wouldn't fit even with all my effort, so there
+went the roguelike monsters names (the easiest monster is A
+for Aardvark, till the more difficult Z for Zombie Master,
+feel free to invent more names).
+
+At same time preserved the ASCII graphics for rooms and items,
+but couldn't put inside scrolls or potions.
+
+In the last iteration I removed the exp(erience) code because
+it really didn't affect the gameplay and managed to get under
+510 bytes.
+
+I've put all the revisions inside the backup directory so you
+can watch the process of optimization. I preferred to optimize
+rather than remove features if possible.
+
+And no, it isn't too easy to go to level 26 and get the Amulet
+of Vendor.
+
+
+>> ATTENTION <<        
+
+Would you like to learn 8086/8088 programming? Then you
+must get my new book Programming Boot Sector Games including
+a 8086/8088/V20 crash course!
+
+Now available from Lulu:
+
+  Soft-cover
+    http://www.lulu.com/shop/oscar-toledo-gutierrez/programming-boot-sector-games/paperback/product-24188564.html
+
+  Hard-cover
+    http://www.lulu.com/shop/oscar-toledo-gutierrez/programming-boot-sector-games/hardcover/product-24188530.html
+
+  eBook
+    https://nanochess.org/store.html
+
+These are some of the example programs documented profusely
+in the book:
+
+  * Guess the number.
+  * Tic-Tac-Toe game.
+  * Text graphics.
+  * Mandelbrot set.
+  * F-Bird game.
+  * Invaders game.
+  * Pillman game.
+  * Toledo Atomchess.
+  * bootBASIC language.
+
