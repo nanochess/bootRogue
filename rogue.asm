@@ -406,7 +406,7 @@ door:
         push bx                 ; Here BH is equal to GR_FLOOR
         mov bh,0x80
         call random             ; Get a random number
-        cmp al,6                ; Chance of creating a monster
+        cmp al,5                ; Chance of creating a monster
         jnc .11
         add al,[bp+level]       ; More difficult monsters as level is deeper
 .9:
