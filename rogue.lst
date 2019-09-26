@@ -85,9 +85,9 @@
     85 00000009 50                              push ax         ; yendor (low byte) + level (high byte)
     86 0000000A 50                              push ax         ; weapon (low byte) + armor (high byte)
     87 0000000B 40                              inc ax          ; ax = 0x0002 (it was 0x0001)
-    88 0000000C CD10                    	int 0x10
+    88 0000000C CD10                            int 0x10
     89 0000000E B800B8                          mov ax,0xb800   ; Text video segment
-    90 00000011 8ED8                    	mov ds,ax
+    90 00000011 8ED8                            mov ds,ax
     91 00000013 8EC0                            mov es,ax
     92                                  
     93 00000015 89E5                            mov bp,sp
@@ -159,18 +159,18 @@
    159 0000006F 29C7                            sub di,ax               ; Subtract from room center
    160 00000071 B0C9                            mov al,GR_TOP_LEFT      ; Draw top row of room
    161 00000073 BBBBCD                          mov bx,GR_HORIZ*256+GR_TOP_RIGHT
-   162 00000076 E81601                  	call fill
+   162 00000076 E81801                          call fill
    163                                  .9:
    164 00000079 B0BA                            mov al,GR_VERT          ; Draw intermediate row of room
    165 0000007B BBBAFA                          mov bx,GR_FLOOR*256+GR_VERT     
-   166 0000007E E80E01                  	call fill
+   166 0000007E E81001                          call fill
    167 00000081 FECD                            dec ch
    168 00000083 79F4                            jns .9
    169 00000085 B0C8                            mov al,GR_BOT_LEFT      ; Draw bottom row of room
    170 00000087 BBBCCD                          mov bx,GR_HORIZ*256+GR_BOT_RIGHT
-   171 0000008A E80201                          call fill
+   171 0000008A E80401                          call fill
    172 0000008D 58                              pop ax
-   173 0000008E 83C034                          add ax,BOX_WIDTH*2
+   173 0000008E 053400                          add ax,BOX_WIDTH*2
    174 00000091 3CF2                            cmp al,0xf2             ; Finished drawing three rooms?
    175 00000093 7503                            jne .6                  ; No, jump
    176                                                                  ; Yes, go to following row
@@ -188,7 +188,7 @@
    188 000000A6 7301                            jnc .2
    189 000000A8 93                              xchg ax,bx
    190 000000A9 7903                    .2:     jns .8
-   191 000000AB 83C068                          add ax,BOX_WIDTH*2*2
+   191 000000AB 056800                          add ax,BOX_WIDTH*2*2
    192                                  .8:
    193 000000AE 97                              xchg ax,di
    194                                  
@@ -317,7 +317,7 @@
    317                                          ;
    318                                  food_found:
    319 0000013E E8A100                          call random6            ; Random 1-6
-   320 00000141 EB05                            jmp add_hp
+   320 00000141 EB05                            jmp short add_hp
    321                                  
    322                                          ;
    323                                          ; Aaaarghhhh!
@@ -351,59 +351,59 @@
    351                                  battle:
    352 00000168 241F                            and al,0x1f     ; Separate number of monster (1-26)     
    353 0000016A 98                              cbw             ; Extend to 16 bits
-   354 0000016B 88C3                            mov bl,al       ; Its attack is equivalent to its number
-   355 0000016D 96                              xchg ax,si      ; Use also as its HP
-   356                                          ; Player's attack
-   357                                  .2:
-   358 0000016E 8A7E00                          mov bh,[bp+weapon]      ; Use current weapon level as dice
-   359 00000171 E87000                          call random
-   360 00000174 29C6                            sub si,ax       ; Subtract from monster's HP
-   361 00000176 88DF                            mov bh,bl
-   362 00000178 7211                            jc .3           ; Killed? yes, jump
-   363                                          ; Monster's attack
-   364 0000017A E86700                          call random     ; Use monster number as dice
-   365 0000017D 2A4601                          sub al,[bp+armor]       ; Subtract armor from attack                               
-   366 00000180 7205                            jc .4
-   367 00000182 53                              push bx
-   368 00000183 E8C0FF                          call sub_hp     ; Subtract from player's HP
-   369 00000186 5B                              pop bx
-   370                                  .4:
-   371                                      ;   mov ah,0x00     ; Comes here with ah = 0
-   372 00000187 CD16                            int 0x16        ; Wait for a key.
-   373 00000189 EBE3                            jmp .2          ; Another battle round.
-   374                                  
-   375                                          ;
-   376                                          ; Monster is dead
-   377                                          ;
-   378                                  .3:
-   379 0000018B C605FA                          mov byte [di],GR_FLOOR  ; Remove from screen
-   380 0000018E C3                              ret
-   381                                  
-   382                                          ;
-   383                                          ; Fill a row on screen for a room
-   384                                          ;
-   385 0000018F 51                      fill:   push cx                 ; Save CX because it needs CL value again
-   386 00000190 57                              push di                 ; Save video position
-   387 00000191 E81500                          call door               ; Left border
-   388 00000194 88F8                    .1:     mov al,bh               ; Filler
-   389 00000196 E81000                          call door
-   390 00000199 FEC9                            dec cl
-   391 0000019B 79F7                            jns .1
-   392 0000019D 88D8                            mov al,bl               ; Right border
-   393 0000019F E80700                          call door
-   394 000001A2 5F                              pop di                  ; Restore video position
-   395 000001A3 59                              pop cx                  ; Restore CX                                        
-   396 000001A4 81C7A000                        add di,0x00a0           ; Goes to next row on screen
-   397 000001A8 C3                      	ret
-   398                                  
-   399                                          ;
-   400                                          ; Draw a room character on screen
-   401                                          ;
-   402                                  door:
-   403 000001A9 3CFA                            cmp al,GR_FLOOR         ; Drawing floor?
-   404 000001AB 7523                            jne .3                  ; No, jump
-   405 000001AD 53                              push bx                 ; Here BH is equal to GR_FLOOR
-   406 000001AE B780                            mov bh,0x80
+   354 0000016B D0E0                            shl al,1        ; Make it slightly harder
+   355 0000016D 88C3                            mov bl,al       ; Its attack is equivalent to its number
+   356 0000016F 96                              xchg ax,si      ; Use also as its HP
+   357                                          ; Player's attack
+   358                                  .2:
+   359 00000170 8A7E00                          mov bh,[bp+weapon]      ; Use current weapon level as dice
+   360 00000173 E86E00                          call random
+   361 00000176 29C6                            sub si,ax       ; Subtract from monster's HP
+   362 00000178 88DF                            mov bh,bl
+   363 0000017A 7211                            jc .3           ; Killed? yes, jump
+   364                                          ; Monster's attack
+   365 0000017C E86500                          call random     ; Use monster number as dice
+   366 0000017F 2A4601                          sub al,[bp+armor]       ; Subtract armor from attack                               
+   367 00000182 7205                            jc .4
+   368 00000184 53                              push bx
+   369 00000185 E8BEFF                          call sub_hp     ; Subtract from player's HP
+   370 00000188 5B                              pop bx
+   371                                  .4:
+   372                                      ;   mov ah,0x00     ; Comes here with ah = 0
+   373 00000189 CD16                            int 0x16        ; Wait for a key.
+   374 0000018B EBE3                            jmp .2          ; Another battle round.
+   375                                  
+   376                                          ;
+   377                                          ; Monster is dead
+   378                                          ;
+   379                                  .3:
+   380 0000018D C605FA                          mov byte [di],GR_FLOOR  ; Remove from screen
+   381 00000190 C3                              ret
+   382                                  
+   383                                          ;
+   384                                          ; Fill a row on screen for a room
+   385                                          ;
+   386 00000191 51                      fill:   push cx                 ; Save CX because it needs CL value again
+   387 00000192 57                              push di                 ; Save video position
+   388 00000193 E81500                          call door               ; Left border
+   389 00000196 88F8                    .1:     mov al,bh               ; Filler
+   390 00000198 E81000                          call door
+   391 0000019B FEC9                            dec cl
+   392 0000019D 79F7                            jns .1
+   393 0000019F 88D8                            mov al,bl               ; Right border
+   394 000001A1 E80700                          call door
+   395 000001A4 5F                              pop di                  ; Restore video position
+   396 000001A5 59                              pop cx                  ; Restore CX                                        
+   397 000001A6 81C7A000                        add di,0x00a0           ; Goes to next row on screen
+   398 000001AA C3                              ret
+   399                                  
+   400                                          ;
+   401                                          ; Draw a room character on screen
+   402                                          ;
+   403                                  door:
+   404 000001AB 3CFA                            cmp al,GR_FLOOR         ; Drawing floor?
+   405 000001AD 7521                            jne .3                  ; No, jump
+   406 000001AF 53                              push bx                 ; Here BH is equal to GR_FLOOR
    407 000001B0 E83100                          call random             ; Get a random number
    408 000001B3 3C06                            cmp al,6                ; Chance of creating a monster
    409 000001B5 730D                            jnc .11
@@ -413,11 +413,11 @@
    413 000001BC 3C17                            cmp al,0x17             ; Make sure it fits inside ASCII letters
    414 000001BE 7DFA                            jge .9
    415 000001C0 0444                            add al,0x44             ; Offset into ASCII letters
-   416 000001C2 EB0B                            jmp .12
+   416 000001C2 EB0B                            jmp short .12
    417                                  
    418                                  .11:
-   419 000001C4 BB[F401]                        mov bx,items-5          ; Table of items
-   420 000001C7 3C0A                            cmp al,10               ; Chance of creating an item
+   419 000001C4 BB[F301]                        mov bx,items-6          ; Table of items
+   420 000001C7 3C0B                            cmp al,11               ; Chance of creating an item
    421 000001C9 2ED7                            cs xlat
    422 000001CB 7202                            jb .12
    423 000001CD B0FA                            mov al,GR_FLOOR         ; Show only floor.
@@ -440,19 +440,19 @@
    440                                  random:
    441 000001E4 B8A11E                          mov ax,7841
    442 000001E7 F76606                          mul word [bp+rnd]
-   443 000001EA 83C053                  	add ax,83
+   443 000001EA 055300                          add ax,83
    444 000001ED 894606                          mov [bp+rnd],ax
    445                                   
    446                                  ;       rdtsc           ; Would make it dependent on Pentium II
    447                                  
    448                                  ;       in al,(0x40)    ; Only works for slow requirements.
    449                                  
-   450 000001F0 30E4                    	xor ah,ah
-   451 000001F2 F6F7                    	div bh
-   452 000001F4 88E0                    	mov al,ah
+   450 000001F0 30E4                            xor ah,ah
+   451 000001F2 F6F7                            div bh
+   452 000001F4 88E0                            mov al,ah
    453 000001F6 98                              cbw
    454 000001F7 40                              inc ax
-   455 000001F8 C3                      	ret
+   455 000001F8 C3                              ret
    456                                  
    457                                          ;
    458                                          ; Items
@@ -467,6 +467,6 @@
    467                                      %ifdef com_file
    468                                      %else
    469                                          times 510-($-$$) db 0x4f
-   470                                          db 0x55,0xaa            ; Make it a bootable sector
+   470 000001FE 55AA                            db 0x55,0xaa            ; Make it a bootable sector
    471                                      %endif
    472                                  

@@ -5,7 +5,7 @@ src = rogue.asm
 .PHONY: all
 all: rogue.img
 
-os.img: $(src)
+rogue.img: $(src)
 	nasm -f bin -l rogue.lst -o $@ $(src)
 
 .PHONY: clean

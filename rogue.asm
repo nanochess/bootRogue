@@ -85,9 +85,9 @@ start:
         push ax         ; yendor (low byte) + level (high byte)
         push ax         ; weapon (low byte) + armor (high byte)
         inc ax          ; ax = 0x0002 (it was 0x0001)
-	int 0x10
+        int 0x10
         mov ax,0xb800   ; Text video segment
-	mov ds,ax
+        mov ds,ax
         mov es,ax
 
         mov bp,sp
@@ -159,11 +159,11 @@ generate_dungeon:
         sub di,ax               ; Subtract from room center
         mov al,GR_TOP_LEFT      ; Draw top row of room
         mov bx,GR_HORIZ*256+GR_TOP_RIGHT
-	call fill
+        call fill
 .9:
         mov al,GR_VERT          ; Draw intermediate row of room
         mov bx,GR_FLOOR*256+GR_VERT     
-	call fill
+        call fill
         dec ch
         jns .9
         mov al,GR_BOT_LEFT      ; Draw bottom row of room
@@ -318,7 +318,7 @@ weapon_found:
         ;
 food_found:
         call random6            ; Random 1-6
-        jmp add_hp
+        jmp short add_hp
 
         ;
         ; Aaaarghhhh!
@@ -352,6 +352,7 @@ add_hp: add ax,[bp+hp]          ; Add to current HP
 battle:
         and al,0x1f     ; Separate number of monster (1-26)     
         cbw             ; Extend to 16 bits
+        shl al,1        ; Make it slightly harder
         mov bl,al       ; Its attack is equivalent to its number
         xchg ax,si      ; Use also as its HP
         ; Player's attack
@@ -395,7 +396,7 @@ fill:   push cx                 ; Save CX because it needs CL value again
         pop di                  ; Restore video position
         pop cx                  ; Restore CX                                        
         add di,0x00a0           ; Goes to next row on screen
-	ret
+        ret
 
         ;
         ; Draw a room character on screen
@@ -404,9 +405,8 @@ door:
         cmp al,GR_FLOOR         ; Drawing floor?
         jne .3                  ; No, jump
         push bx                 ; Here BH is equal to GR_FLOOR
-        mov bh,0x80
         call random             ; Get a random number
-        cmp al,5                ; Chance of creating a monster
+        cmp al,6                ; Chance of creating a monster
         jnc .11
         add al,[bp+level]       ; More difficult monsters as level is deeper
 .9:
@@ -414,11 +414,11 @@ door:
         cmp al,0x17             ; Make sure it fits inside ASCII letters
         jge .9
         add al,0x44             ; Offset into ASCII letters
-        jmp .12
+        jmp short .12
 
 .11:
-        mov bx,items-5          ; Table of items
-        cmp al,10               ; Chance of creating an item
+        mov bx,items-6          ; Table of items
+        cmp al,11               ; Chance of creating an item
         cs xlat
         jb .12
         mov al,GR_FLOOR         ; Show only floor.
@@ -441,19 +441,19 @@ random6:
 random:
         mov ax,7841
         mul word [bp+rnd]
-	add ax,83
+        add ax,83
         mov [bp+rnd],ax
  
 ;       rdtsc           ; Would make it dependent on Pentium II
 
 ;       in al,(0x40)    ; Only works for slow requirements.
 
-	xor ah,ah
-	div bh
-	mov al,ah
+        xor ah,ah
+        div bh
+        mov al,ah
         cbw
         inc ax
-	ret
+        ret
 
         ;
         ; Items
