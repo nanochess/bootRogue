@@ -18,6 +18,7 @@
         ; Revision date: Sep/24/2019. Again lots of optimization. 596 bytes.
         ; Revision date: Sep/25/2019. Many optimizations. 553 bytes.
         ; Revision date: Sep/26/2019. The final effort. 510 bytes.
+        ; Revision date: Sep/27/2019. The COM file exits to DOS instead of halting.
         ;
 
         CPU 8086
@@ -97,7 +98,11 @@ generate_dungeon:
         ;
         mov bl,[bp+yendor]
         add [bp+level],bl
+    %ifdef com_file
+        je quit         ; Stop if level zero is reached
+    %else
         je $            ; Stop if level zero is reached
+    %endif
 
         ;
         ; Select a maze for the dungeon
@@ -236,6 +241,10 @@ game_loop:
         pop word [di]           ; Restore character under 
 
         mov al,ah
+    %ifdef com_file
+        cmp al,0x01
+        je quit                 ; Exit if Esc key is pressed
+    %endif
 
         sub al,0x4c
         mov ah,0x02             ; Left/right multiplies by 2
@@ -284,6 +293,11 @@ move_over:
 move_cancel:
         ret                     ; Return to main loop.
 
+    %ifdef com_file
+quit:
+        int 0x20
+    %endif
+
         ;
         ;     I--
         ;   I--
@@ -327,7 +341,11 @@ trap_found:
         call random6            ; Random 1-6
 sub_hp: neg ax                  ; Make it negative
 add_hp: add ax,[bp+hp]          ; Add to current HP
+    %ifdef com_file
+        js quit                 ; Exit if Esc key is pressed
+    %else
         js $                    ; Stall if dead
+    %endif
         mov [bp+hp],ax          ; Update HP.
         ;
         ; Update screen indicator
