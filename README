@@ -24,6 +24,10 @@ Use this command line:
   nasm -f bin rogue.asm -l rogue.lst -o rogue.img
   nasm -f bin rogue.asm -Dcom_file=1 -o rogue.com
 
+Youtube video:
+
+  https://www.youtube.com/watch?v=DMMr4z6kU5g
+
 
 >> HOW TO PLAY <<
 

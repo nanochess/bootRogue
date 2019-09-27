@@ -158,16 +158,16 @@
    158 0000006E 5F                              pop di
    159 0000006F 29C7                            sub di,ax               ; Subtract from room center
    160 00000071 B0C9                            mov al,GR_TOP_LEFT      ; Draw top row of room
-   161 00000073 BBBBCD                          mov bx,GR_HORIZ*256+GR_TOP_RIGHT
+   161 00000073 BBCDBB                          mov bx,GR_TOP_RIGHT*256+GR_HORIZ
    162 00000076 E81801                          call fill
    163                                  .9:
    164 00000079 B0BA                            mov al,GR_VERT          ; Draw intermediate row of room
-   165 0000007B BBBAFA                          mov bx,GR_FLOOR*256+GR_VERT     
+   165 0000007B BBFABA                          mov bx,GR_VERT*256+GR_FLOOR     
    166 0000007E E81001                          call fill
    167 00000081 FECD                            dec ch
    168 00000083 79F4                            jns .9
    169 00000085 B0C8                            mov al,GR_BOT_LEFT      ; Draw bottom row of room
-   170 00000087 BBBCCD                          mov bx,GR_HORIZ*256+GR_BOT_RIGHT
+   170 00000087 BBCDBC                          mov bx,GR_BOT_RIGHT*256+GR_HORIZ
    171 0000008A E80401                          call fill
    172 0000008D 58                              pop ax
    173 0000008E 053400                          add ax,BOX_WIDTH*2
@@ -386,11 +386,11 @@
    386 00000191 51                      fill:   push cx                 ; Save CX because it needs CL value again
    387 00000192 57                              push di                 ; Save video position
    388 00000193 E81500                          call door               ; Left border
-   389 00000196 88F8                    .1:     mov al,bh               ; Filler
+   389 00000196 88D8                    .1:     mov al,bl               ; Filler
    390 00000198 E81000                          call door
    391 0000019B FEC9                            dec cl
    392 0000019D 79F7                            jns .1
-   393 0000019F 88D8                            mov al,bl               ; Right border
+   393 0000019F 88F8                            mov al,bh               ; Right border
    394 000001A1 E80700                          call door
    395 000001A4 5F                              pop di                  ; Restore video position
    396 000001A5 59                              pop cx                  ; Restore CX                                        
@@ -403,7 +403,7 @@
    403                                  door:
    404 000001AB 3CFA                            cmp al,GR_FLOOR         ; Drawing floor?
    405 000001AD 7521                            jne .3                  ; No, jump
-   406 000001AF 53                              push bx                 ; Here BH is equal to GR_FLOOR
+   406 000001AF 53                              push bx                 ; Here BH is equal to GR_VERT
    407 000001B0 E83100                          call random             ; Get a random number
    408 000001B3 3C06                            cmp al,6                ; Chance of creating a monster
    409 000001B5 730D                            jnc .11

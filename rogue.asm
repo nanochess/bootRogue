@@ -158,16 +158,16 @@ generate_dungeon:
         pop di
         sub di,ax               ; Subtract from room center
         mov al,GR_TOP_LEFT      ; Draw top row of room
-        mov bx,GR_HORIZ*256+GR_TOP_RIGHT
+        mov bx,GR_TOP_RIGHT*256+GR_HORIZ
         call fill
 .9:
         mov al,GR_VERT          ; Draw intermediate row of room
-        mov bx,GR_FLOOR*256+GR_VERT     
+        mov bx,GR_VERT*256+GR_FLOOR     
         call fill
         dec ch
         jns .9
         mov al,GR_BOT_LEFT      ; Draw bottom row of room
-        mov bx,GR_HORIZ*256+GR_BOT_RIGHT
+        mov bx,GR_BOT_RIGHT*256+GR_HORIZ
         call fill
         pop ax
         add ax,BOX_WIDTH*2
@@ -387,11 +387,11 @@ battle:
 fill:   push cx                 ; Save CX because it needs CL value again
         push di                 ; Save video position
         call door               ; Left border
-.1:     mov al,bh               ; Filler
+.1:     mov al,bl               ; Filler
         call door
         dec cl
         jns .1
-        mov al,bl               ; Right border
+        mov al,bh               ; Right border
         call door
         pop di                  ; Restore video position
         pop cx                  ; Restore CX                                        
@@ -404,7 +404,7 @@ fill:   push cx                 ; Save CX because it needs CL value again
 door:
         cmp al,GR_FLOOR         ; Drawing floor?
         jne .3                  ; No, jump
-        push bx                 ; Here BH is equal to GR_FLOOR
+        push bx                 ; Here BH is equal to GR_VERT
         call random             ; Get a random number
         cmp al,6                ; Chance of creating a monster
         jnc .11
