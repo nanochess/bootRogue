@@ -66,12 +66,12 @@ YENDOR_LEVEL:   EQU 26          ; Level of appearance for Amulet of Yendor
         ;
         ; Sorted by order of PUSH instructions
         ;
-rnd:    equ 0x0006      ; Random seed
-hp:     equ 0x0004      ; Current HP
-level:  equ 0x0003      ; Current level (starting at 0x01)
-yendor: equ 0x0002      ; 0x01 = Not found. 0xff = Found.
-armor:  equ 0x0001      ; Armor level
-weapon: equ 0x0000      ; Weapon level
+rnd:    equ 0x0006      ; Random seed (used 4 times)
+hp:     equ 0x0004      ; Current HP (used 2 times)
+level:  equ 0x0003      ; Current level (starting at 0x01) (used 3 times)
+yendor: equ 0x0002      ; 0x01 = Not found. 0xff = Found. (Used 2 times)
+armor:  equ 0x0001      ; Armor level (used 2 times)
+weapon: equ 0x0000      ; Weapon level (used 2 times)
 
         ;
         ; Start of the adventure!
@@ -79,7 +79,6 @@ weapon: equ 0x0000      ; Weapon level
 start:
         in ax,0x40      ; Read timer counter
         push ax         ; Setup pseudorandom number generator
-
         mov ax,16
         push ax         ; hp
         mov al,1
@@ -91,8 +90,11 @@ start:
         mov ds,ax
         mov es,ax
 
-        mov bp,sp
+        mov si,random
+        mov bp,sp       ; Using BP because it implies SS and vars are on stack.
+
 generate_dungeon:
+
         ;
         ; Advance to next level (can go deeper or higher)
         ;
@@ -115,10 +117,10 @@ generate_dungeon:
         mov ax,[bp+rnd]        
         and ax,0x4182
         or ax,0x1a6d
-        xchg ax,si
+        xchg ax,dx
 
         ;
-        ; Clean the screen
+        ; Clean the screen to black over black (it hides maze)
         ;
         xor ax,ax
         xor di,di
@@ -131,51 +133,7 @@ generate_dungeon:
         mov ax,(BOX_HEIGHT/2-2)*ROW_WIDTH+(BOX_WIDTH/2-2)*2
 .7:
         push ax
-        push ax
-        add ax,ROW_WIDTH+4      ; Get the center of room
-        xchg ax,di                                              
-        shr si,1                ; Obtain bit of right connection
-        mov ax,0x0000+GR_TUNNEL
-        mov cx,BOX_WIDTH
-        jnc .3
-        push di
-        rep stosw               ; Horizontal tunnel
-        pop di
-.3:
-        shr si,1                ; Obtain bit of down connection
-        jnc .5
-        mov cl,BOX_HEIGHT
-.4:
-        stosb                   ; Vertical tunnel
-        add di,ROW_WIDTH-1
-        loop .4
-.5:     
-        mov bh,BOX_MAX_WIDTH-2  
-        call random             ; Get a random width for room.
-        xchg ax,cx
-        mov bh,BOX_MAX_HEIGHT-2
-        call random             ; Get a random height for room.
-        mov ch,al
-        and al,0xfe             ; It needs a/2*2 so this does it.
-        mov ah,ROW_WIDTH/2
-        mul ah
-        add ax,cx               ; Now it has a centering offset
-        sub ah,ch               ; Better than "mov bx,cx mov bh,0"
-        and al,0xfe
-        pop di
-        sub di,ax               ; Subtract from room center
-        mov al,GR_TOP_LEFT      ; Draw top row of room
-        mov bx,GR_TOP_RIGHT*256+GR_HORIZ
-        call fill
-.9:
-        mov al,GR_VERT          ; Draw intermediate row of room
-        mov bx,GR_VERT*256+GR_FLOOR     
-        call fill
-        dec ch
-        jns .9
-        mov al,GR_BOT_LEFT      ; Draw bottom row of room
-        mov bx,GR_BOT_RIGHT*256+GR_HORIZ
-        call fill
+        call fill_room
         pop ax
         add ax,BOX_WIDTH*2
         cmp al,0xf2             ; Finished drawing three rooms?
@@ -265,33 +223,45 @@ game_loop:
 
         xchg ax,bx              ; bx = displacement offset
         mov al,[di+bx]          ; Read the target contents
+        ;
+        ; All the things that can exist on screen start with GR_* (17 things)
+        ; So no need to account for all cases.
+        ; We won't never found GR_HERO so 16 things to look for.
+        ;
         cmp al,GR_LADDER        ; GR_LADDER?
-        je ladder_found         ; Yes, jump to next level
-        ja move_over            ; > it must be GR_FLOOR
+        je ladder_found
+        ; 15 things to look for (plus zero and monsters)
+        ; Anything > GR_TUNNEL and < GR_DOOR is a wall 
         cmp al,GR_DOOR          ; GR_DOOR?
-        je move_over            ; Yes, can move
+        jnc .4
         cmp al,GR_TUNNEL        ; GR_TUNNEL?
-        je move_over            ; Yes, can move
-        ja move_cancel          ; > it must be border, cancel movement
+        ja move_cancel
+.4:
+        ; 9 things to look for (plus zero and monsters)
         cmp al,GR_TRAP          ; GR_TRAP?
         jb move_cancel          ; < it must be blank, cancel movement
+        ; Move player
         lea di,[di+bx]          ; Do move.
+        mov bh,0x06             ; Random range for GR_FOOD and GR_TRAP
         je trap_found           ; = Yes, went over trap
+        ; 8 things to look for (plus monsters)
+        cmp al,GR_TUNNEL        ; GR_TUNNEL+GR_DOOR+GR_FLOOR ?
+        jnc move_cancel         ; Yes, jump.
         cmp al,GR_WEAPON        ; GR_WEAPON?
         ja battle               ; > it's a monster, go to battle
+        ; Only items at this part of code, so clean floor
         mov byte [di],GR_FLOOR  ; Delete item from floor
         je weapon_found         ; = weapon found
+        ; 4 things to look for
         cmp al,GR_ARMOR         ; GR_ARMOR?
         je armor_found          ; Yes, increase armor
         jb food_found           ; < it's GR_FOOD, increase hp
+        ; 2 things to look for
         cmp al,GR_GOLD          ; GR_GOLD?
         je move_cancel          ; Yes, simply take it.
         ; At this point 'al' only can be GR_YENDOR
         ; Amulet of Yendor found!
         neg byte [bp+yendor]    ; Now player goes upwards over ladders.
-        ret
-move_over:        
-        lea di,[bx+di]          ; Do move.
 move_cancel:
         ret                     ; Return to main loop.
 
@@ -328,20 +298,20 @@ weapon_found:
         ret
 
         ;
+        ; Aaaarghhhh!
+        ;
+trap_found:
+        call si                 ; Random 1-6
+sub_hp: neg ax                  ; Make it negative
+        db 0xbb                 ; MOV BX to jump two bytes
+        ;
         ;     /--\
         ; ====    I
         ;     \--/
         ;
 food_found:
-        call random6            ; Random 1-6
-        jmp short add_hp
+        call si                 ; Random 1-6
 
-        ;
-        ; Aaaarghhhh!
-        ;
-trap_found:
-        call random6            ; Random 1-6
-sub_hp: neg ax                  ; Make it negative
 add_hp: add ax,[bp+hp]          ; Add to current HP
     %ifdef com_file
         js quit                 ; Exit if Esc key is pressed
@@ -371,24 +341,23 @@ add_hp: add ax,[bp+hp]          ; Add to current HP
         ;
 battle:
         and al,0x1f     ; Separate number of monster (1-26)     
-        cbw             ; Extend to 16 bits
         shl al,1        ; Make it slightly harder
-        mov bl,al       ; Its attack is equivalent to its number
-        xchg ax,si      ; Use also as its HP
+        mov ah,al       ; Use also as its HP
+        xchg ax,dx      ; Its attack is equivalent to its number
         ; Player's attack
 .2:
         mov bh,[bp+weapon]      ; Use current weapon level as dice
-        call random
-        sub si,ax       ; Subtract from monster's HP
-        mov bh,bl
+        call si
+        sub dh,al       ; Subtract from monster's HP
         jc .3           ; Killed? yes, jump
         ; Monster's attack
-        call random     ; Use monster number as dice
+        mov bh,dl       ; Use monster number as dice
+        call si     
         sub al,[bp+armor]       ; Subtract armor from attack                               
         jc .4
-        push bx
+        push dx
         call sub_hp     ; Subtract from player's HP
-        pop bx
+        pop dx
 .4:
     ;   mov ah,0x00     ; Comes here with ah = 0
         int 0x16        ; Wait for a key.
@@ -400,6 +369,55 @@ battle:
 .3:
         mov byte [di],GR_FLOOR  ; Remove from screen
         ret
+
+        ;
+        ; Fill a room
+        ;
+fill_room:
+        push ax
+        add ax,ROW_WIDTH+4      ; Get the center of room
+        xchg ax,di                                              
+        shr dx,1                ; Obtain bit of right connection
+        mov ax,0x0000+GR_TUNNEL
+        mov cx,BOX_WIDTH
+        jnc .3
+        push di
+        rep stosw               ; Horizontal tunnel
+        pop di
+.3:
+        shr dx,1                ; Obtain bit of down connection
+        jnc .5
+        mov cl,BOX_HEIGHT
+.4:
+        stosb                   ; Vertical tunnel
+        add di,ROW_WIDTH-1
+        loop .4
+.5:     
+        mov bh,BOX_MAX_WIDTH-2  
+        call si                 ; Get a random width for room.
+        xchg ax,cx
+        mov bh,BOX_MAX_HEIGHT-2
+        call si                 ; Get a random height for room.
+        mov ch,al
+        and al,0xfe             ; It needs a/2*2 so this does it.
+        mov ah,ROW_WIDTH/2
+        mul ah
+        add ax,cx               ; Now it has a centering offset
+        sub ah,ch               ; Better than "mov bx,cx mov bh,0"
+        and al,0xfe
+        pop di
+        sub di,ax               ; Subtract from room center
+        mov al,GR_TOP_LEFT      ; Draw top row of room
+        mov bx,GR_TOP_RIGHT*256+GR_HORIZ
+        call fill
+.9:
+        mov al,GR_VERT          ; Draw intermediate row of room
+        mov bx,GR_VERT*256+GR_FLOOR     
+        call fill
+        dec ch
+        jns .9
+        mov al,GR_BOT_LEFT      ; Draw bottom row of room
+        mov bx,GR_BOT_RIGHT*256+GR_HORIZ
 
         ;
         ; Fill a row on screen for a room
@@ -424,8 +442,7 @@ fill:   push cx                 ; Save CX because it needs CL value again
 door:
         cmp al,GR_FLOOR         ; Drawing floor?
         jne .3                  ; No, jump
-        push bx                 ; Here BH is equal to GR_VERT
-        call random             ; Get a random number
+        call si                 ; Get a random number (BH value is GR_VERT)
         cmp al,6                ; Chance of creating a monster
         jnc .11
         add al,[bp+level]       ; More difficult monsters as level is deeper
@@ -437,12 +454,13 @@ door:
         jmp short .12
 
 .11:
-        mov bx,items-6          ; Table of items
         cmp al,11               ; Chance of creating an item
-        cs xlat
+        xchg ax,bx
+        cs mov bl,[si+bx+(items-random-6)]
+        xchg ax,bx
         jb .12
         mov al,GR_FLOOR         ; Show only floor.
-.12:    pop bx
+.12:    
 .3:
         cmp al,GR_HORIZ
         je .1
@@ -455,13 +473,10 @@ door:
         inc di
         ret
 
-random6:
-        mov bh,0x06
-
 random:
-        mov ax,7841
-        mul word [bp+rnd]
-        add ax,83
+        mov al,251
+        mul byte [bp+rnd]
+        add al,83
         mov [bp+rnd],ax
  
 ;       rdtsc           ; Would make it dependent on Pentium II
