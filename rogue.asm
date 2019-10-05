@@ -90,7 +90,8 @@ start:
         mov ds,ax
         mov es,ax
 
-        mov si,random
+        mov si,random   ; SI as a space saver for CALL
+
         mov bp,sp       ; Using BP because it implies SS and vars are on stack.
 
 generate_dungeon:
@@ -130,13 +131,12 @@ generate_dungeon:
         ;
         ; Draw the nine rooms
         ;
-        mov ax,(BOX_HEIGHT/2-2)*ROW_WIDTH+(BOX_WIDTH/2-2)*2
 .7:
         push ax
         call fill_room
         pop ax
         add ax,BOX_WIDTH*2
-        cmp al,0xf2             ; Finished drawing three rooms?
+        cmp al,0x9c             ; Finished drawing three rooms?
         jne .6                  ; No, jump
                                 ; Yes, go to following row
         add ax,ROW_WIDTH*BOX_HEIGHT-BOX_WIDTH*3*2
@@ -192,13 +192,13 @@ game_loop:
         ;
         ; Show our hero
         ;
-        push word [di]          ; Save character under 
+        push word [di]          ; Save character and attribute under 
         mov word [di],HERO_COLOR*256+GR_HERO
         xor ax,ax
         call add_hp             ; Update stats
     ;   mov ah,0x00             ; Comes here with ah = 0
         int 0x16                ; Read keyboard
-        pop word [di]           ; Restore character under 
+        pop word [di]           ; Restore character and attribute under 
 
         mov al,ah
     %ifdef com_file
@@ -323,17 +323,28 @@ add_hp: add ax,[bp+hp]          ; Add to current HP
         ; Update screen indicator
         ;
         mov bx,0x0f98           ; Point to bottom right corner
+        call .1
+        mov al,[bp+weapon]
+        call .1
+    %ifdef com_file
+        mov al,[bp+armor]
+        call .1
+    %endif
+        mov al,[bp+level]
 .1:
-        cwd                     ; Extend AX into DX
-        mov cx,10                                               
-        div cx                  ; Divide by 10
-        add dx,0x0a30           ; Add ASCII digit zero and color to remainder
-        mov [bx],dx             ; Put on screen
+        xor cx,cx               ; CX = Quotient
+.2:     inc cx
+        sub ax,10               ; Division by subtraction
+        jnc .2
+        add ax,0x0a3a           ; Convert remainder to ASCII digit + color
+        call .3                 ; Put on screen
+        xchg ax,cx
+        dec ax                  ; Quotient is zero?
+        jnz .1                  ; No, jump to show more digits.
+
+.3:     mov [bx],ax
         dec bx
         dec bx
-        or ax,ax                ; More digits available?
-        jnz .1                  ; Yes, jump
-        mov [bx],ax             ; Erase character just in case number shrinks
         ret
 
         ;
@@ -355,9 +366,7 @@ battle:
         call si     
         sub al,[bp+armor]       ; Subtract armor from attack                               
         jc .4
-        push dx
         call sub_hp     ; Subtract from player's HP
-        pop dx
 .4:
     ;   mov ah,0x00     ; Comes here with ah = 0
         int 0x16        ; Wait for a key.
@@ -374,8 +383,8 @@ battle:
         ; Fill a room
         ;
 fill_room:
+        add ax,(BOX_HEIGHT/2-1)*ROW_WIDTH+(BOX_WIDTH/2)*2
         push ax
-        add ax,ROW_WIDTH+4      ; Get the center of room
         xchg ax,di                                              
         shr dx,1                ; Obtain bit of right connection
         mov ax,0x0000+GR_TUNNEL
@@ -399,12 +408,14 @@ fill_room:
         mov bh,BOX_MAX_HEIGHT-2
         call si                 ; Get a random height for room.
         mov ch,al
-        and al,0xfe             ; It needs a/2*2 so this does it.
-        mov ah,ROW_WIDTH/2
+        shr al,1                ;
+        inc ax
+        mov ah,ROW_WIDTH
         mul ah
         add ax,cx               ; Now it has a centering offset
         sub ah,ch               ; Better than "mov bx,cx mov bh,0"
         and al,0xfe
+        add al,0x04
         pop di
         sub di,ax               ; Subtract from room center
         mov al,GR_TOP_LEFT      ; Draw top row of room
