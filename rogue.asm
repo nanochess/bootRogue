@@ -66,7 +66,8 @@ YENDOR_LEVEL:   EQU 26          ; Level of appearance for Amulet of Yendor
         ;
         ; Sorted by order of PUSH instructions
         ;
-rnd:    equ 0x0006      ; Random seed (used 4 times)
+rnd:    equ 0x0008      ; Random seed (used 4 times)
+starve: equ 0x0006      ; Starve counter (used once)
 hp:     equ 0x0004      ; Current HP (used 2 times)
 level:  equ 0x0003      ; Current level (starting at 0x01) (used 3 times)
 yendor: equ 0x0002      ; 0x01 = Not found. 0xff = Found. (Used 2 times)
@@ -80,6 +81,7 @@ start:
         in ax,0x40      ; Read timer counter
         push ax         ; Setup pseudorandom number generator
         mov ax,16
+        push ax         ; starve
         push ax         ; hp
         mov al,1
         push ax         ; yendor (low byte) + level (high byte)
@@ -194,7 +196,8 @@ game_loop:
         ;
         push word [di]          ; Save character and attribute under 
         mov word [di],HERO_COLOR*256+GR_HERO
-        xor ax,ax
+        add byte [bp+starve],1  ; Cannot use INC because it needs Carry set
+        sbb ax,ax               ; HP down 1 each 256 steps
         call add_hp             ; Update stats
     ;   mov ah,0x00             ; Comes here with ah = 0
         int 0x16                ; Read keyboard
@@ -324,9 +327,9 @@ add_hp: add ax,[bp+hp]          ; Add to current HP
         ;
         mov bx,0x0f98           ; Point to bottom right corner
         call .1
+    %ifdef com_file
         mov al,[bp+weapon]
         call .1
-    %ifdef com_file
         mov al,[bp+armor]
         call .1
     %endif
