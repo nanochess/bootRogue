@@ -196,8 +196,8 @@
    196                                          ;
    197 00000084 FF35                            push word [di]          ; Save character and attribute under 
    198 00000086 C705010E                        mov word [di],HERO_COLOR*256+GR_HERO
-   199 0000008A 80460601                        add byte [bp+starve],1  ; Cannot use INC because it needs Carry set
-   200 0000008E 19C0                            sbb ax,ax               ; HP down 1 each 256 steps
+   199 0000008A 80460602                        add byte [bp+starve],2  ; Cannot use INC because it needs Carry set
+   200 0000008E 19C0                            sbb ax,ax               ; HP down 1 each 128 steps
    201 00000090 E86A00                          call add_hp             ; Update stats
    202                                      ;   mov ah,0x00             ; Comes here with ah = 0
    203 00000093 CD16                            int 0x16                ; Read keyboard

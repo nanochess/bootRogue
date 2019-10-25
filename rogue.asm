@@ -196,8 +196,8 @@ game_loop:
         ;
         push word [di]          ; Save character and attribute under 
         mov word [di],HERO_COLOR*256+GR_HERO
-        add byte [bp+starve],1  ; Cannot use INC because it needs Carry set
-        sbb ax,ax               ; HP down 1 each 256 steps
+        add byte [bp+starve],2  ; Cannot use INC because it needs Carry set
+        sbb ax,ax               ; HP down 1 each 128 steps
         call add_hp             ; Update stats
     ;   mov ah,0x00             ; Comes here with ah = 0
         int 0x16                ; Read keyboard
