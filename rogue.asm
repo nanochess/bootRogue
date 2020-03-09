@@ -123,7 +123,7 @@ generate_dungeon:
         xchg ax,dx
 
         ;
-        ; Clean the screen to black over black (it hides maze)
+        ; Clean the screen to black over black (it hides the maze)
         ;
         xor ax,ax
         xor di,di
@@ -197,7 +197,7 @@ game_loop:
         push word [di]          ; Save character and attribute under 
         mov word [di],HERO_COLOR*256+GR_HERO
         add byte [bp+starve],2  ; Cannot use INC because it needs Carry set
-        sbb ax,ax               ; HP down 1 each 128 steps
+        sbb ax,ax               ; HP down 1 every 128 steps
         call add_hp             ; Update stats
     ;   mov ah,0x00             ; Comes here with ah = 0
         int 0x16                ; Read keyboard
@@ -229,7 +229,7 @@ game_loop:
         ;
         ; All the things that can exist on screen start with GR_* (17 things)
         ; So no need to account for all cases.
-        ; We won't never found GR_HERO so 16 things to look for.
+        ; We won't ever find GR_HERO so there are 16 things to look for.
         ;
         cmp al,GR_LADDER        ; GR_LADDER?
         je ladder_found
@@ -251,7 +251,7 @@ game_loop:
         cmp al,GR_TUNNEL        ; GR_TUNNEL+GR_DOOR+GR_FLOOR ?
         jnc move_cancel         ; Yes, jump.
         cmp al,GR_WEAPON        ; GR_WEAPON?
-        ja battle               ; > it's a monster, go to battle
+        ja battle               ; > it's a monster, so go to battle
         ; Only items at this part of code, so clean floor
         mov byte [di],GR_FLOOR  ; Delete item from floor
         je weapon_found         ; = weapon found
@@ -262,7 +262,7 @@ game_loop:
         ; 2 things to look for
         cmp al,GR_GOLD          ; GR_GOLD?
         je move_cancel          ; Yes, simply take it.
-        ; At this point 'al' only can be GR_YENDOR
+        ; At this point 'al' can only be GR_YENDOR
         ; Amulet of Yendor found!
         neg byte [bp+yendor]    ; Now player goes upwards over ladders.
 move_cancel:
